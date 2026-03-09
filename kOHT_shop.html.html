@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tienda kOHT</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --neon-blue: #00d4ff;
+  --neon-cyan: #00ffcc;
+  --neon-purple: #bf00ff;
+  --dark-bg: #080c14;
+  --card-bg: #0d1520;
+  --card-border: #0e2a45;
+  --text-main: #e0f4ff;
+  --gold: #ffd700;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--dark-bg);
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+/* ── SCANLINES OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,212,255,0.015) 2px,
+    rgba(0,212,255,0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── PARTICLE CANVAS ── */
+#particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  background: linear-gradient(135deg, #050d18 0%, #0a1628 50%, #050d18 100%);
+  padding: 40px 20px 30px;
+  text-align: center;
+  border-bottom: 2px solid var(--neon-blue);
+  overflow: hidden;
+  z-index: 10;
+}
+
+header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.12) 0%, transparent 70%);
+}
+
+.header-glitch {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  color: #fff;
+  text-shadow:
+    0 0 10px var(--neon-blue),
+    0 0 30px var(--neon-blue),
+    0 0 60px rgba(0,212,255,0.4);
+  position: relative;
+  display: inline-block;
+  animation: headerEntrance 0.8s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes headerEntrance {
+  from { opacity: 0; transform: translateY(-40px) scale(0.8); letter-spacing: 0.5em; }
+  to   { opacity: 1; transform: translateY(0) scale(1);       letter-spacing: normal; }
+}
+
+.header-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: var(--neon-cyan);
+  clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+  animation: glitch 4s infinite;
+  opacity: 0.7;
+}
+
+@keyframes glitch {
+  0%,90%,100% { transform: none; opacity: 0; }
+  92%          { transform: translateX(-3px); opacity: 0.8; }
+  94%          { transform: translateX(3px);  opacity: 0.8; }
+  96%          { transform: translateX(0);    opacity: 0;   }
+}
+
+header p {
+  font-size: 1rem;
+  color: rgba(0,212,255,0.7);
+  margin-top: 12px;
+  letter-spacing: 0.08em;
+  animation: fadeSlideUp 1s 0.4s both;
+}
+
+/* ── DECORATIVE LINE ── */
+.deco-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-cyan), var(--neon-purple), transparent);
+  margin: 0;
+  animation: lineExpand 1s 0.6s both;
+  transform-origin: center;
+}
+@keyframes lineExpand { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ── CONTAINER ── */
+.container {
+  position: relative;
+  padding: 50px 30px;
+  text-align: center;
+  z-index: 10;
+}
+
+.container h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  animation: fadeSlideUp 0.8s 0.8s both;
+}
+
+/* ── PRODUCT GRID ── */
+.productos {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  width: 230px;
+  padding: 24px 18px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+
+  /* PowerPoint-style stagger entrance */
+  opacity: 0;
+  transform: translateY(40px) scale(0.92);
+}
+
+.card.visible {
+  animation: cardPop 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+@keyframes cardPop {
+  from { opacity: 0; transform: translateY(40px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.08), transparent);
+  transition: left 0.5s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow:
+    0 0 20px rgba(0,212,255,0.25),
+    0 0 50px rgba(0,212,255,0.1),
+    0 20px 40px rgba(0,0,0,0.5);
+  border-color: var(--neon-blue);
+}
+
+.card:hover::before { opacity: 1; }
+.card:hover::after  { left: 140%; }
+
+/* corner accent */
+.card .corner {
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 0;
+  border-left: 30px solid transparent;
+  border-top: 30px solid var(--neon-blue);
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+.card:hover .corner { opacity: 1; }
+
+/* icon */
+.card-icon {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(0,212,255,0.6));
+  transition: transform 0.3s;
+}
+.card:hover .card-icon { transform: scale(1.2) rotate(-5deg); }
+
+.card h3 {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.85rem;
+  color: var(--neon-blue);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.card p {
+  font-size: 0.88rem;
+  color: rgba(224,244,255,0.65);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  min-height: 48px;
+}
+
+.precio {
+  font-family: 'Orbitron', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(255,215,0,0.5);
+  margin-bottom: 16px;
+  transition: transform 0.2s;
+}
+.card:hover .precio { transform: scale(1.08); }
+
+.boton {
+  background: transparent;
+  border: 1.5px solid var(--neon-blue);
+  padding: 9px 22px;
+  color: var(--neon-blue);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  transition: color 0.3s, box-shadow 0.3s;
+}
+
+.boton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--neon-blue);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+  z-index: -1;
+}
+
+.boton:hover {
+  color: #000;
+  box-shadow: 0 0 20px rgba(0,212,255,0.5);
+}
+.boton:hover::before { transform: scaleX(1); }
+.boton:active { transform: scale(0.96); }
+
+/* ── SPECIAL CARD (Pack Completo) ── */
+.card.especial {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, #0d1520 60%, #1a1200 100%);
+}
+.card.especial .corner { border-top-color: var(--gold); }
+.card.especial:hover {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 20px rgba(255,215,0,0.3),
+    0 0 50px rgba(255,215,0,0.1),
+    0 20px 40px rgba(0,0,0,0.5);
+}
+.card.especial h3 { color: var(--gold); }
+.card.especial .boton {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.card.especial .boton::before { background: var(--gold); }
+.badge {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: var(--gold);
+  color: #000;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.55rem;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.1em;
+  animation: badgePulse 2s infinite;
+}
+@keyframes badgePulse {
+  0%,100% { box-shadow: 0 0 0 rgba(255,215,0,0.4); }
+  50%      { box-shadow: 0 0 12px rgba(255,215,0,0.8); }
+}
+
+/* ── CONTACT ── */
+.contacto {
+  position: relative;
+  z-index: 10;
+  background: linear-gradient(135deg, #0a1628 0%, #0d1020 100%);
+  border-top: 1px solid rgba(0,212,255,0.2);
+  border-bottom: 1px solid rgba(0,212,255,0.2);
+  padding: 50px 30px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.contacto::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(0,212,255,0.07) 0%, transparent 70%);
+}
+
+.contacto h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.4rem;
+  color: var(--neon-cyan);
+  letter-spacing: 0.2em;
+  margin-bottom: 24px;
+  animation: fadeSlideUp 0.8s both;
+}
+
+.contact-items {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.contact-chip {
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 1rem;
+  color: rgba(224,244,255,0.8);
+  transition: border-color 0.3s, background 0.3s, transform 0.2s;
+}
+.contact-chip:hover {
+  border-color: var(--neon-blue);
+  background: rgba(0,212,255,0.12);
+  transform: translateY(-3px);
+}
+.contact-chip span { color: var(--neon-blue); font-weight: 700; }
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 20px;
+  background: #040810;
+  color: rgba(0,212,255,0.4);
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  border-top: 1px solid rgba(0,212,255,0.1);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--dark-bg); }
+::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 3px; }
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 600px) {
+  header { padding: 28px 16px 20px; }
+  .header-glitch { font-size: clamp(1.6rem, 8vw, 2.2rem); }
+  header p { font-size: 0.78rem; line-height: 1.5; padding: 0 8px; }
+  .container { padding: 30px 16px; }
+  .container h2 { font-size: 1.1rem; margin-bottom: 24px; }
+  .productos { flex-direction: column; align-items: center; gap: 16px; }
+  .card { width: 100%; max-width: 340px; padding: 20px 16px; }
+  .card-icon { font-size: 2rem; }
+  .card h3 { font-size: 0.82rem; }
+  .card p { font-size: 0.85rem; min-height: auto; }
+  .precio { font-size: 0.95rem; }
+  .boton { width: 100%; padding: 11px 10px; font-size: 0.68rem; }
+  .contacto { padding: 36px 16px; }
+  .contacto h2 { font-size: 1.1rem; }
+  .contact-items { flex-direction: column; align-items: center; gap: 12px; }
+  .contact-chip { width: 100%; max-width: 340px; font-size: 0.88rem; text-align: center; word-break: break-all; }
+  footer { font-size: 0.62rem; padding: 16px 12px; }
+}
+@media (max-width: 380px) {
+  .header-glitch { font-size: 1.4rem; }
+  .card { max-width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<header>
+  <h1 class="header-glitch" data-text="Tienda kOHT">Tienda kOHT</h1>
+  <p>Venta de Optimizaciones · Macros · Tweaks · APK Bloom · Tweaks Escopeta · Subfusil · Fusil</p>
+</header>
+<div class="deco-line"></div>
+
+<div class="container">
+  <h2>⚡ Productos</h2>
+
+  <div class="productos">
+
+    <div class="card" data-delay="0">
+      <div class="corner"></div>
+      <span class="card-icon">🚀</span>
+      <h3>Optimizaciones</h3>
+      <p>Optimizamos tu juego para que sea más rápido y más fluido.</p>
+      <div class="precio">$10 USD · 180 MXN</div>
+      <button class="boton" onclick="window.open('https://discord.gg/72g6NNFc','_blank')">Comprar</button>
+    </div>
+
+    <div class="card" data-delay="100">
+      <div class="corner"></div>
+      <span class="card-icon">🎯</span>
+      <h3>Macros</h3>
+      <p>Macro Autobil, Drang Macro, Shoutgun, dbl Edit.</p>
+      <div class="precio">$15 USD · $250 MXN</div>
+      <button class="boton" onclick="window.open('https://discord.gg/72g6NNFc','_blank')">Comprar</button>
+    </div>
+
+    <div class="card" data-delay="200">
+      <div class="corner"></div>
+      <span class="card-icon">⚙️</span>
+      <h3>Tweaks Pack</h3>
+      <p>Tweaks (Zen) para mejorar tu aimbot, 0 delay, bajar procesos, aumentar FPS.</p>
+      <div class="precio">$7 USD · 125 MXN</div>
+      <button class="boton" onclick="window.open('https://discord.gg/72g6NNFc','_blank')">Comprar</button>
+    </div>
+
+    <div class="card" data-delay="300">
+      <div class="corner"></div>
+      <span class="card-icon">📱</span>
+      <h3>APK Bloom</h3>
+      <p>Delay bloom 0% de retroceso.</p>
+      <div class="precio">$7 USD · 125 MXN</div>
+       <button class="boton" onclick="window.open('https://discord.gg/72g6NNFc','_blank')">Comprar</button>
+    </div>
+
+    <div class="card" data-delay="400">
+      <div class="corner"></div>
+      <span class="card-icon">🔫</span>
+      <h3>Tweaks Escopeta</h3>
+      <p>Only 200. Más facilidad con escopeta.</p>
+      <div class="precio">$7 USD · 125 MXN</div>
+      <button class="boton" onclick="window.open('https://discord.gg/72g6NNFc','_blank')">Comprar</button>
+    </div>
+
+    <div class="card especial" data-delay="500">
+      <div class="corner"></div>
+      <div class="badge">★ BEST VALUE</div>
+      <span class="card-icon">👑</span>
+      <h3>Pack Completo</h3>
+      <p>Todos los archivos + configs incluidos.</p>
+      <div class="precio">$25 USD · 400 MXN</div>
+      <button class="boton" onclick="window.open('https://discord.gg/72g6NNFc','_blank')">Comprar</button>
+    </div>
+
+    <div class="card" data-delay="600">
+      <div class="corner"></div>
+      <span class="card-icon">📈</span>
+      <h3>Opti consola bost </h3>
+      <p>Mejora los FPS y rendimiento general del juego.</p>
+      <div class="precio">$5 USD · 80 MXN</div>
+      <button class="boton" onclick="window.open('https://discord.gg/72g6NNFc','_blank')">Comprar</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="contacto">
+  <h2>📡 Contacto</h2>
+  <div class="contact-items">
+    <div class="contact-chip"><span>Discord:</span> https://discord.gg/72g6NNFc</div>
+    <div class="contact-chip"><span>Instagram:</span> @proximamente</div>
+  
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 Tienda kOHT — All Systems Online</p>
+</footer>
+
+<script>
+/* ── PARTICLES ── */
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let W, H, pts = [];
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+for (let i = 0; i < 80; i++) {
+  pts.push({
+    x: Math.random() * 2000,
+    y: Math.random() * 1500,
+    r: Math.random() * 1.5 + 0.3,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    a: Math.random()
+  });
+}
+
+function drawParticles() {
+  ctx.clearRect(0, 0, W, H);
+  pts.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    p.a += 0.005;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0,212,255,${0.2 + 0.3 * Math.abs(Math.sin(p.a))})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+/* ── POWERPOINT-STYLE CARD ENTRANCE ── */
+const cards = document.querySelectorAll('.card');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const card = entry.target;
+      const delay = parseInt(card.dataset.delay) || 0;
+      setTimeout(() => card.classList.add('visible'), delay);
+      observer.unobserve(card);
+    }
+  });
+}, { threshold: 0.1 });
+
+cards.forEach(c => observer.observe(c));
+
+/* ── BUTTON RIPPLE ── */
+document.querySelectorAll('.boton').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    const r = document.createElement('span');
+    r.style.cssText = `
+      position:absolute; border-radius:50%;
+      background:rgba(255,255,255,0.3);
+      width:80px; height:80px;
+      margin-top:-40px; margin-left:-40px;
+      top:${e.offsetY}px; left:${e.offsetX}px;
+      animation:ripple 0.5s linear;
+      pointer-events:none; z-index:10;
+    `;
+    this.appendChild(r);
+    setTimeout(() => r.remove(), 500);
+  });
+});
+
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes ripple {
+    from { transform: scale(0); opacity: 1; }
+    to   { transform: scale(3); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
